@@ -30,7 +30,7 @@ def on_connect(client, userdata, flags, rc):
    # client.publish("server/assign_id","Device_Type: arduino")
     client.subscribe("client/arduino")
     client.subscribe("client/jetson_up")
-    client.subscribe("rasp_pi_2/rtt")
+    client.subscribe("rasp_pi_1/rtt")
     client.publish("server/connected_devices",str(run_cli("hostname -I"))+" "+str(run_cli("hostname")))
    
 # The callback for when a PUBLISH message is received from the server.
@@ -52,7 +52,7 @@ def on_disconnect(client,userdata,rc):
     if rc!=0:
         print("Unexpected device disconnection")
         print("Trying to reinitialise connection!")
-        client.connect("192.168.1.185", 1883, 5)
+        client.connect("192.168.1.11", 1883, 5)
     else:
         print("Diconnected from information broker")
     
@@ -83,7 +83,7 @@ client.will_set("server/node_disconnection",payload=str(run_cli("hostname -I"))+
 client.reconnect_delay_set(min_delay=5,max_delay=20)
 
 # Start connection to information broker!
-client.connect("192.168.1.185", 1883, 5)
+client.connect("192.168.1.11", 1883, 5)
 
 # Blocking call that processes network traffic, dispatches callbacks and
 # handles reconnecting.

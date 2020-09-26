@@ -43,7 +43,7 @@ def on_message(client, userdata, msg):
         temp = msg.topic.split("/", 2)
         serving_queue.put(("client/" + temp[1], str(msg.payload.decode("utf-8"))))
     elif msg.topic == "server/gallileo":
-        print("I got a message from the gallileo")
+        print("I got a message from the gallileo(beagle_2)")
         temp = msg.topic.split("/", 2)
         serving_queue.put(("client/" + temp[1], str(msg.payload.decode("utf-8"))))
     elif msg.topic == "server/connected_devices":
@@ -65,7 +65,15 @@ def on_message(client, userdata, msg):
             print("There are no currently connected devices!")
         else:
             print_connected_devices()
-
+    elif msg.topic == "server/rtt_pi_1":
+        client.publish("rasp_pi_1/rtt","1",qos=2)
+    elif msg.topic == "server/rtt_pi_2":
+        client.publish("rasp_pi_2/rtt","1",qos=2)
+    elif msg.topic == "server/rtt_beagle_1":
+        client.publish("beagle_1/rtt","1",qos=2)
+    elif msg.topic == "server/rtt_beagle_2":
+        client.publish("beagle_2/rtt","1",qos=2)
+        
 def on_publish(client,userdata,mid):
     print("Message published with message id: "+ str(mid))
 
@@ -109,7 +117,7 @@ client.on_publish = on_publish
 client.on_subscribe = on_subscribe
 client.on_unsubscribe = on_unsubscribe
 
-client.connect("147.102.248.95", 1883, 4)
+client.connect("127.0.0.1", 1883, 4)
 
 # Blocking call that processes network traffic, dispatches callbacks and
 # handles reconnecting.
@@ -136,6 +144,8 @@ while True:
             output = subprocess.check_output(
                 ["python3", "raspberrypi.py", returning_value[1]]
             )
+            subprocess.call(["nvcc","one.cu"])
+            subprocess.call(["./a.out"])
             publishing_value=client.publish(returning_value[0], output,qos=2)
             publishing_value.wait_for_publish()
             if(publishing_value.wait_for_publish() is False):
@@ -146,6 +156,8 @@ while True:
             output = subprocess.check_output(
                 ["python3", "arduino.py", returning_value[1]]
             )
+            subprocess.call(["nvcc","one.cu"])
+            subprocess.call(["./a.out"])
             publishing_value=client.publish(returning_value[0], output)
             publishing_value.wait_for_publish()
             if(publishing_value.wait_for_publish() is False):
@@ -156,6 +168,8 @@ while True:
             output = subprocess.check_output(
                 ["python3", "gallileo.py", returning_value[1]]
             )
+            subprocess.call(["nvcc","one.cu"])
+            subprocess.call(["./a.out"])
             publishing_value=client.publish(returning_value[0], output,qos=2)
             publishing_value.wait_for_publish()
             if(publishing_value.wait_for_publish() is False):
@@ -165,7 +179,9 @@ while True:
             print("Input from node was:" + returning_value[1])
             output = subprocess.check_output(
                 ["python3", "beagleboard.py", returning_value[1]]
-            )
+            ) 
+            subprocess.call(["nvcc","one.cu"])
+            subprocess.call(["./a.out"])
             publishing_value=client.publish(returning_value[0], output,qos=2)
             publishing_value.wait_for_publish()
             if(publishing_value.wait_for_publish() is False):

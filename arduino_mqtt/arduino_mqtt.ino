@@ -18,9 +18,9 @@
 #include <PubSubClient.h>
 
 // Update these with values suitable for your network.
-// Change mac address to gallileo model.
+// Change mac address to arduino model.
 byte mac[]    = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xED };
-IPAddress server(192, 168, 1, 8);//server IP
+IPAddress server(192, 168, 1, 11);//server IP
 EthernetClient ethClient;
 PubSubClient client(ethClient);
 int counter = 0;
@@ -68,14 +68,14 @@ void subscribeReceive(char* topic, byte* payload, unsigned int length)
 void connect_to_broker() {
   String ip;
   char init_array[100];
-  ip=DisplayAddress(Ethernet.localIP())+"\n gallileo \n";
+  ip=DisplayAddress(Ethernet.localIP())+"\n arduino \n";
   ip.toCharArray(init_array,100);
   // Loop until we're connected
   
   while (!client.connected()){
     Serial.println("Attempting MQTT connection");
     // Attempt to connect
-    if (client.connect("gallileo","server/node_disconnection",2,false,init_array)){ 
+    if (client.connect("arduino","server/node_disconnection",2,false,init_array)){ 
         Serial.println("Succesfully connected to information broker!");
         setting_up_connections();
     }
@@ -94,10 +94,10 @@ void setting_up_connections(){
 String ip;
 char init_array[100];
 
-    ip=DisplayAddress(Ethernet.localIP())+"\n gallileo \n";
+    ip=DisplayAddress(Ethernet.localIP())+"\n arduino \n";
     ip.toCharArray(init_array,100);
     client.publish("server/connected_devices",init_array);
-    client.subscribe("client/gallileo");
+    client.subscribe("client/arduino");
     client.subscribe("client/jetson_up");
     return ;
 }
@@ -135,19 +135,19 @@ void loop()
         counter=counter+1;
         output = String(counter);
         Serial.println("Calculating data locally");
-        Serial.println("Output from gallileo is:"+output);
+        Serial.println("Output from arduino is:"+output);
       }
       else{
         if(jetson_up == 1 ){
         output = String(counter);
         output.toCharArray(char_array,100);
         Serial.println("Sending data to gateway");
-        client.publish("server/gallileo",char_array);
+        client.publish("server/arduino",char_array);
         while(flag==0 && jetson_up==1){
          client.loop();
          total_sec = total_sec + millis();
          if(total_sec > 10000){
-         ip=DisplayAddress(Ethernet.localIP())+"\n gallileo \n";
+         ip=DisplayAddress(Ethernet.localIP())+"\n arduino \n";
          ip.toCharArray(init_array,100);
          client.publish("server/connected_devices",init_array);
          total_sec =0;
@@ -160,13 +160,13 @@ void loop()
           counter=counter+1;
           output = String(counter);
           Serial.println("Calculating data locally");
-          Serial.println("Output from gallileo is:"+output);
+          Serial.println("Output from arduino is:"+output);
         }
       }  
     }
          total_sec = total_sec + millis();
          if(total_sec > 10000){
-         ip=DisplayAddress(Ethernet.localIP())+"\n gallileo \n";
+         ip=DisplayAddress(Ethernet.localIP())+"\n arduino \n";
          ip.toCharArray(init_array,100);
          client.publish("server/connected_devices",init_array);
          total_sec =0;

@@ -27,10 +27,10 @@ def on_connect(client, userdata, flags, rc):
     connection_flag=1
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
-   # client.publish("server/assign_id","Device_Type: arduino")
-    client.subscribe("client/arduino")
+   # client.publish("server/assign_id","Device_Type: beagleboard")
+    client.subscribe("client/gallileo")
     client.subscribe("client/jetson_up")
-    client.subscribe("rasp_pi_2/rtt")
+    client.subscribe("beagle_2/rtt")
     client.publish("server/connected_devices",str(run_cli("hostname -I"))+" "+str(run_cli("hostname")))
    
 # The callback for when a PUBLISH message is received from the server.
@@ -38,21 +38,21 @@ def on_message(client, userdata, msg):
     global client_queue
     global rtt
     global jetson_up
-    if(msg.topic=="client/arduino"):
+    if(msg.topic=="client/gallileo"):
         client_queue.put(str(msg.payload.decode("utf-8")).split("\n",1)[0])
     elif(msg.topic=="client/jetson_up"):
         if(str(msg.payload.decode("utf-8")).split("\n",1)[0]=="Yes"):
             jetson_up=1
         elif(str(msg.payload.decode("utf-8")).split("\n",1)[0]=="No"):
             jetson_up=0
-    elif(msg.topic=="rasp_pi_2/rtt"):
+    elif(msg.topic=="beagle_2/rtt"):
         rtt.put(str(msg.payload.decode("utf-8")))
     
 def on_disconnect(client,userdata,rc):
     if rc!=0:
         print("Unexpected device disconnection")
         print("Trying to reinitialise connection!")
-        client.connect("192.168.1.185", 1883, 5)
+        client.connect("192.168.1.11", 1883, 5)
     else:
         print("Diconnected from information broker")
     
@@ -68,7 +68,7 @@ def on_unsubscribe(client,userdata,mid):
     print("Succesfully unsubscribed to requested topic!")
     subscrption_flag=subscrption_flag-1
 
-client = mqtt.Client("Raspberry_Pi")
+client = mqtt.Client("Beagleboard_2")
 # Callback functions!
 client.on_disconnect = on_disconnect
 client.on_connect = on_connect
@@ -83,7 +83,7 @@ client.will_set("server/node_disconnection",payload=str(run_cli("hostname -I"))+
 client.reconnect_delay_set(min_delay=5,max_delay=20)
 
 # Start connection to information broker!
-client.connect("192.168.1.185", 1883, 5)
+client.connect("192.168.1.11", 1883, 5)
 
 # Blocking call that processes network traffic, dispatches callbacks and
 # handles reconnecting.
@@ -116,11 +116,11 @@ while(True):
             total_time = time.time() - starting_time
             print("Total execution time was:"+str(total_time)+" seconds")
             input = input+1
-            print("Output from raspberry_pi_2 is: "+str(input))
+            print("Output from beagleboard_2 is: "+str(input))
         else:
             if jetson_up==1:
                 starting_time = time.time()
-                publish_value = client.publish("server/rtt_pi_1","1",qos=2)
+                publish_value = client.publish("server/rtt_beagle_2","1",qos=2)
                 publish_value.wait_for_publish()
                 if(publish_value.wait_for_publish is False):
                     print("Failed to queue message")
@@ -132,7 +132,7 @@ while(True):
                     rtt.get()
                 print("Sending data to jetson nano")
                 starting_time = time.time()
-                published_value=client.publish("server/arduino",str(input),qos=2)
+                published_value=client.publish("server/gallileo",str(input),qos=2)
                 if(published_value.wait_for_publish() is False):
                     print("Failed to queue message!")
                 while(client_queue.empty()==True and jetson_up==1):
@@ -149,7 +149,7 @@ while(True):
                 print("Jetson Nano is not currently up will have to calculate output localy!")
                 input = input+1
                 print("Calculating data localy")
-                print("Output from raspberry_pi_2 is: "+str(input))
+                print("Output from beagleboard_2 is: "+str(input))
         if client.is_connected() == False:
             client.reconnect()
             
